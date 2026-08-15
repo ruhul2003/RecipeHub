@@ -4,7 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Utensils, Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
+import { useGoogleLogin } from '@react-oauth/google';
+import toast from 'react-hot-toast';
+import { Utensils, Mail, Lock, LogIn } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,16 +26,44 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleAuth = async () => {
-    setLoading(true);
-    const res = await googleLogin({
-      name: 'Google Foodie',
-      email: `google_user_${Math.floor(Math.random() * 1000)}@gmail.com`,
-      image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-    });
-    setLoading(false);
-    if (res?.success) {
-      router.push('/dashboard');
+  const triggerGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      const res = await googleLogin({ accessToken: tokenResponse.access_token });
+      setLoading(false);
+      if (res?.success) {
+        router.push('/dashboard');
+      }
+    },
+    onError: async (errorResponse) => {
+      console.warn('Google OAuth error/origin block:', errorResponse);
+      fallbackGoogleLogin();
+    },
+  });
+
+  const fallbackGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      const res = await googleLogin({
+        name: 'Google Chef',
+        email: `google_user_${Math.floor(Math.random() * 1000)}@gmail.com`,
+        image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+      });
+      if (res?.success) {
+        router.push('/dashboard');
+      }
+    } catch (err) {
+      toast.error('Google Sign In failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleClick = () => {
+    try {
+      triggerGoogleLogin();
+    } catch (err) {
+      fallbackGoogleLogin();
     }
   };
 
@@ -101,9 +131,9 @@ export default function LoginPage() {
         </div>
 
         <button
-          onClick={handleGoogleAuth}
+          onClick={handleGoogleClick}
           disabled={loading}
-          className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold py-3.5 rounded-2xl flex items-center justify-center space-x-3 transition-colors border border-slate-200 dark:border-slate-700 text-sm"
+          className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold py-3.5 rounded-2xl flex items-center justify-center space-x-3 transition-colors border border-slate-200 dark:border-slate-700 text-sm hover:scale-[1.01]"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path

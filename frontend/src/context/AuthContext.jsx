@@ -1,8 +1,13 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import API from '@/lib/api';
 import toast from 'react-hot-toast';
+
+const GOOGLE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+  '651649176220-q5so4g0crdg2da9qacs9cvpk3865ksrm.apps.googleusercontent.com';
 
 const AuthContext = createContext();
 
@@ -88,20 +93,22 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        register,
-        googleLogin,
-        logout,
-        fetchUser,
-        updateUserProfile,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthContext.Provider
+        value={{
+          user,
+          loading,
+          login,
+          register,
+          googleLogin,
+          logout,
+          fetchUser,
+          updateUserProfile,
+        }}
+      >
+        {children}
+      </AuthContext.Provider>
+    </GoogleOAuthProvider>
   );
 }
 

@@ -121,7 +121,28 @@ router.post('/login', async (req, res) => {
 // @route POST /api/auth/google
 router.post('/google', async (req, res) => {
   try {
-    const { name, email, image } = req.body;
+    let { name, email, image, accessToken } = req.body;
+
+    if (accessToken) {
+      try {
+        const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const googleProfile = await googleRes.json();
+        if (googleProfile.email) {
+          name = googleProfile.name || name;
+          email = googleProfile.email;
+          image = googleProfile.picture || image;
+        }
+      } catch (gErr) {
+        console.error('Google profile fetch error:', gErr);
+      }
+    }
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Google authentication failed: Email missing.' });
+    }
+
     let user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {

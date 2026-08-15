@@ -19,6 +19,7 @@ import {
   Sparkles,
   ArrowLeft,
   Share2,
+  Utensils,
 } from 'lucide-react';
 
 export default function RecipeDetailsPage() {
