@@ -121,7 +121,7 @@ router.post('/', verifyToken, async (req, res) => {
 
     // Check normal user recipe creation limit (Max 2 recipes)
     if (!req.user.isPremium && req.user.role !== 'admin') {
-      const userRecipeCount = await Recipe.countDocuments({ authorId: req.user._id, status: 'active' });
+      const userRecipeCount = await Recipe.countDocuments({ authorId: req.user._id });
       if (userRecipeCount >= 2) {
         return res.status(403).json({
           success: false,

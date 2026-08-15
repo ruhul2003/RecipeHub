@@ -41,7 +41,7 @@ router.put('/profile', verifyToken, async (req, res) => {
 // @route GET /api/users/dashboard-stats
 router.get('/dashboard-stats', verifyToken, async (req, res) => {
   try {
-    const totalRecipes = await Recipe.countDocuments({ authorId: req.user._id, status: 'active' });
+    const totalRecipes = await Recipe.countDocuments({ authorId: req.user._id });
     const totalFavorites = await Favorite.countDocuments({ userId: req.user._id });
 
     const userRecipes = await Recipe.find({ authorId: req.user._id });
