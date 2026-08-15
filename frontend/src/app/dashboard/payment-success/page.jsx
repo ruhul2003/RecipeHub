@@ -1,9 +1,10 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle2, Crown, Utensils, ArrowRight } from 'lucide-react';
+import API from '@/lib/api';
+import { CheckCircle2, Utensils, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
@@ -11,12 +12,35 @@ function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { fetchUser } = useAuth();
+  const [verifying, setVerifying] = useState(true);
 
-  const tx = searchParams.get('tx') || 'tx_demo_891247';
+  const sessionId = searchParams.get('session_id');
+  const tx = searchParams.get('tx') || sessionId || 'tx_stripe_demo_891247';
   const type = searchParams.get('type') || 'premium';
+  const recipeId = searchParams.get('recipeId') || '';
 
-  // Refresh user state so premium badge appears immediately
-  fetchUser();
+  useEffect(() => {
+    const confirmPayment = async () => {
+      try {
+        setVerifying(true);
+        await API.post('/payments/confirm-session', {
+          session_id: sessionId,
+          tx,
+          type,
+          recipeId,
+        });
+        await fetchUser();
+      } catch (err) {
+        console.error('Payment verification error:', err);
+      } finally {
+        setVerifying(false);
+      }
+    };
+
+    confirmPayment();
+  }, [sessionId, tx, type, recipeId]);
+
+  if (verifying) return <LoadingSpinner text="Verifying Stripe Payment status..." />;
 
   return (
     <div className="max-w-xl mx-auto py-16 text-center space-y-8">
@@ -28,7 +52,7 @@ function PaymentSuccessContent() {
         <span className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-black px-4 py-1.5 rounded-full border border-emerald-500/30">
           Stripe Payment Verified
         </span>
-        <h1 className="text-3xl font-black text-slate-900 dark:text-white">
+        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
           Payment Successful! 🎉
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-sm">
@@ -38,13 +62,13 @@ function PaymentSuccessContent() {
         </p>
       </div>
 
-      <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 text-left text-xs space-y-2 font-mono text-slate-600 dark:text-slate-300">
-        <div className="flex justify-between">
-          <span>Transaction ID:</span>
-          <span className="font-bold text-slate-900 dark:text-white">{tx}</span>
+      <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 text-left text-xs space-y-2 font-mono text-slate-600 dark:text-slate-300 shadow-sm">
+        <div className="flex justify-between truncate">
+          <span>Transaction Ref:</span>
+          <span className="font-bold text-slate-900 dark:text-white truncate max-w-[240px]">{tx}</span>
         </div>
         <div className="flex justify-between">
-          <span>Payment Provider:</span>
+          <span>Payment Gateway:</span>
           <span>Stripe Checkout API</span>
         </div>
         <div className="flex justify-between">
