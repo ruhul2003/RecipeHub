@@ -21,6 +21,8 @@ import {
   Share2,
   Utensils,
   Star,
+  Trash2,
+  MessageSquare,
 } from 'lucide-react';
 
 export default function RecipeDetailsPage() {
@@ -117,6 +119,18 @@ export default function RecipeDetailsPage() {
       toast.error(err.response?.data?.message || 'Failed to submit review');
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      const res = await API.delete(`/reviews/${reviewId}`);
+      if (res.data.success) {
+        toast.success(res.data.message || 'Review deleted.');
+        fetchReviews();
+      }
+    } catch (err) {
+      toast.error('Failed to delete review');
     }
   };
 
@@ -434,6 +448,78 @@ export default function RecipeDetailsPage() {
               >
                 Log In to Review
               </button>
+            </div>
+          )}
+        </div>
+
+        {/* Existing Reviews List */}
+        <div className="space-y-4 pt-4">
+          <h4 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-amber-500" />
+            <span>Customer Feedback ({reviews.length})</span>
+          </h4>
+
+          {reviews.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400 italic py-4">
+              No reviews yet. Be the first to share your thoughts on this dish!
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {reviews.map((rev) => (
+                <div
+                  key={rev._id}
+                  className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800/60 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                        {rev.userName ? rev.userName.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white leading-none">
+                          {rev.userName}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {new Date(rev.createdAt).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-3.5 h-3.5 ${
+                              star <= rev.rating
+                                ? 'text-amber-400 fill-amber-400'
+                                : 'text-slate-300 dark:text-slate-600'
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      {(user?.email === rev.userEmail || user?.role === 'admin') && (
+                        <button
+                          onClick={() => handleDeleteReview(rev._id)}
+                          title="Delete review"
+                          className="text-slate-400 hover:text-rose-500 p-1 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                    {rev.comment}
+                  </p>
+                </div>
+              ))}
             </div>
           )}
         </div>
