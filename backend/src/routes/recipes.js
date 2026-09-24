@@ -7,10 +7,22 @@ const User = require('../models/User');
 const { verifyToken } = require('../middleware/auth');
 
 // @route GET /api/recipes
-// Supports: category (comma separated for $in filter), search, page, limit, featured, popular
+// Supports: category, search, cuisine, difficulty, maxTime, dietaryTag, sortBy, page, limit, featured, popular
 router.get('/', async (req, res) => {
   try {
-    const { category, search, cuisine, page = 1, limit = 9, featured, popular } = req.query;
+    const {
+      category,
+      search,
+      cuisine,
+      difficulty,
+      maxTime,
+      dietaryTag,
+      sortBy,
+      page = 1,
+      limit = 9,
+      featured,
+      popular,
+    } = req.query;
 
     const query = { status: 'active' };
 
@@ -19,6 +31,21 @@ router.get('/', async (req, res) => {
       const categoriesArray = category.split(',').map((c) => c.trim()).filter(Boolean);
       if (categoriesArray.length > 0) {
         query.category = { $in: categoriesArray.map(c => new RegExp(c, 'i')) };
+      }
+    }
+
+    if (difficulty && difficulty !== 'all') {
+      query.difficultyLevel = new RegExp(`^${difficulty}$`, 'i');
+    }
+
+    if (maxTime && !isNaN(Number(maxTime))) {
+      query.preparationTime = { $lte: Number(maxTime) };
+    }
+
+    if (dietaryTag) {
+      const tagsArray = dietaryTag.split(',').map((t) => t.trim()).filter(Boolean);
+      if (tagsArray.length > 0) {
+        query.dietaryTags = { $in: tagsArray.map(t => new RegExp(t, 'i')) };
       }
     }
 
@@ -40,8 +67,16 @@ router.get('/', async (req, res) => {
     }
 
     let sort = { createdAt: -1 };
-    if (popular === 'true') {
+    if (sortBy === 'popular' || popular === 'true') {
       sort = { likesCount: -1, createdAt: -1 };
+    } else if (sortBy === 'rating') {
+      sort = { averageRating: -1, ratingsCount: -1, createdAt: -1 };
+    } else if (sortBy === 'prepTimeAsc') {
+      sort = { preparationTime: 1, createdAt: -1 };
+    } else if (sortBy === 'prepTimeDesc') {
+      sort = { preparationTime: -1, createdAt: -1 };
+    } else if (sortBy === 'newest') {
+      sort = { createdAt: -1 };
     }
 
     const pageNum = parseInt(page, 10);
