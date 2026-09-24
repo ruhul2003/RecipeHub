@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import API from '@/lib/api';
 import RecipeCard from '@/components/RecipeCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { Search, Filter, ChevronLeft, ChevronRight, Utensils, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, Utensils, CheckCircle2, Clock, Flame } from 'lucide-react';
 
 const CATEGORIES = ['Italian', 'Asian', 'Breakfast', 'Bakery', 'Dessert', 'Mexican', 'American', 'Thai'];
 
@@ -15,6 +15,8 @@ function RecipesContent() {
 
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
+  const [maxTime, setMaxTime] = useState('');
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -29,7 +31,7 @@ function RecipesContent() {
     }
   }, [searchParams]);
 
-  // Fetch recipes with pagination & category filtering ($in)
+  // Fetch recipes with pagination & filters
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
@@ -46,6 +48,14 @@ function RecipesContent() {
           params.append('search', searchTerm);
         }
 
+        if (selectedDifficulty && selectedDifficulty !== 'all') {
+          params.append('difficulty', selectedDifficulty);
+        }
+
+        if (maxTime) {
+          params.append('maxTime', maxTime);
+        }
+
         const res = await API.get(`/recipes?${params.toString()}`);
         if (res.data.success) {
           setRecipes(res.data.recipes);
@@ -60,7 +70,7 @@ function RecipesContent() {
     };
 
     fetchRecipes();
-  }, [page, selectedCategories, searchTerm]);
+  }, [page, selectedCategories, searchTerm, selectedDifficulty, maxTime]);
 
   const toggleCategory = (category) => {
     setPage(1);
@@ -72,6 +82,8 @@ function RecipesContent() {
   const clearFilters = () => {
     setSelectedCategories([]);
     setSearchTerm('');
+    setSelectedDifficulty('all');
+    setMaxTime('');
     setPage(1);
   };
 
@@ -109,12 +121,12 @@ function RecipesContent() {
           </div>
 
           {/* Clear Filters */}
-          {(selectedCategories.length > 0 || searchTerm) && (
+          {(selectedCategories.length > 0 || searchTerm || selectedDifficulty !== 'all' || maxTime) && (
             <button
               onClick={clearFilters}
               className="text-xs font-bold text-rose-500 hover:text-rose-600 px-4 py-3 bg-rose-50 dark:bg-rose-950/40 rounded-2xl transition-colors whitespace-nowrap"
             >
-              Clear Filters ({selectedCategories.length + (searchTerm ? 1 : 0)})
+              Clear Filters
             </button>
           )}
         </div>
@@ -144,6 +156,67 @@ function RecipesContent() {
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        {/* Difficulty & Cooking Time Quick Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-slate-100 dark:border-slate-800">
+          {/* Difficulty Level */}
+          <div>
+            <div className="flex items-center space-x-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              <Flame className="w-4 h-4 text-orange-500" />
+              <span>Difficulty Level:</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {['all', 'Easy', 'Medium', 'Hard'].map((diff) => (
+                <button
+                  key={diff}
+                  onClick={() => {
+                    setSelectedDifficulty(diff);
+                    setPage(1);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    selectedDifficulty === diff
+                      ? 'bg-orange-500 text-white shadow-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                  }`}
+                >
+                  {diff === 'all' ? 'All Difficulties' : diff}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Max Prep Time */}
+          <div>
+            <div className="flex items-center space-x-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              <Clock className="w-4 h-4 text-amber-500" />
+              <span>Max Prep Time:</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'Any Time', value: '' },
+                { label: '< 15 mins', value: '15' },
+                { label: '< 30 mins', value: '30' },
+                { label: '< 45 mins', value: '45' },
+                { label: '< 60 mins', value: '60' },
+              ].map((timeOption) => (
+                <button
+                  key={timeOption.value}
+                  onClick={() => {
+                    setMaxTime(timeOption.value);
+                    setPage(1);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    maxTime === timeOption.value
+                      ? 'bg-amber-500 text-white shadow-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                  }`}
+                >
+                  {timeOption.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
