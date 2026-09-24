@@ -26,7 +26,9 @@ import {
   Users,
   Minus,
   Plus,
+  Timer,
 } from 'lucide-react';
+import CookingTimer from '@/components/CookingTimer';
 
 function formatScaledNumber(num) {
   if (Math.abs(num - Math.round(num)) < 0.05) {
@@ -81,6 +83,7 @@ export default function RecipeDetailsPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
+  const [isTimerOpen, setIsTimerOpen] = useState(false);
   const [servingsMultiplier, setServingsMultiplier] = useState(1);
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
@@ -438,9 +441,18 @@ export default function RecipeDetailsPage() {
 
         {/* Cooking Instructions Column */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
-          <div className="flex items-center space-x-3 text-amber-500 font-extrabold text-xl">
-            <Sparkles className="w-6 h-6" />
-            <h3>Preparation & Cooking Steps</h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center space-x-3 text-amber-500 font-extrabold text-xl">
+              <Sparkles className="w-6 h-6" />
+              <h3>Preparation & Cooking Steps</h3>
+            </div>
+            <button
+              onClick={() => setIsTimerOpen(true)}
+              className="inline-flex items-center space-x-2 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold px-4 py-2 rounded-xl text-xs transition-colors self-start sm:self-auto border border-amber-200 dark:border-amber-800/60"
+            >
+              <Timer className="w-4 h-4 text-amber-500" />
+              <span>Launch Cooking Timer</span>
+            </button>
           </div>
 
           <div className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-line font-medium bg-slate-50 dark:bg-slate-800/40 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
@@ -605,6 +617,13 @@ export default function RecipeDetailsPage() {
           )}
         </div>
       </div>
+
+      {/* Cooking Timer Modal */}
+      <CookingTimer
+        isOpen={isTimerOpen}
+        onClose={() => setIsTimerOpen(false)}
+        initialMinutes={recipe.preparationTime || 15}
+      />
 
       {/* Report Modal Component */}
       <ReportModal
