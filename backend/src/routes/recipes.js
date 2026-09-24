@@ -97,6 +97,46 @@ router.get('/my-recipes', verifyToken, async (req, res) => {
   }
 });
 
+// @route GET /api/recipes/:id/related
+// @desc Get related recipes based on category or cuisine
+router.get('/:id/related', async (req, res) => {
+  try {
+    const currentRecipe = await Recipe.findById(req.params.id);
+    if (!currentRecipe) {
+      return res.status(404).json({ success: false, message: 'Recipe not found.' });
+    }
+
+    // Find recipes with matching category or cuisineType, excluding the current recipe
+    let relatedRecipes = await Recipe.find({
+      _id: { $ne: currentRecipe._id },
+      status: 'active',
+      $or: [
+        { category: currentRecipe.category },
+        { cuisineType: currentRecipe.cuisineType },
+      ],
+    })
+      .sort({ likesCount: -1, averageRating: -1 })
+      .limit(4);
+
+    // If fewer than 4, find other popular active recipes to recommend
+    if (relatedRecipes.length < 4) {
+      const existingIds = [currentRecipe._id, ...relatedRecipes.map((r) => r._id)];
+      const fillers = await Recipe.find({
+        _id: { $nin: existingIds },
+        status: 'active',
+      })
+        .sort({ likesCount: -1, createdAt: -1 })
+        .limit(4 - relatedRecipes.length);
+
+      relatedRecipes = [...relatedRecipes, ...fillers];
+    }
+
+    res.json({ success: true, count: relatedRecipes.length, recipes: relatedRecipes });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch related recipes', error: error.message });
+  }
+});
+
 // @route GET /api/recipes/:id
 router.get('/:id', async (req, res) => {
   try {
