@@ -11,6 +11,7 @@ const favoriteRoutes = require('./src/routes/favorites');
 const paymentRoutes = require('./src/routes/payments');
 const userRoutes = require('./src/routes/users');
 const adminRoutes = require('./src/routes/admin');
+const reviewRoutes = require('./src/routes/reviews');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -47,6 +48,7 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
