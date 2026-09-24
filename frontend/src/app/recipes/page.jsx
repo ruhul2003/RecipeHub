@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import API from '@/lib/api';
 import RecipeCard from '@/components/RecipeCard';
+import RecipeQuickModal from '@/components/RecipeQuickModal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Search, Filter, ChevronLeft, ChevronRight, Utensils, CheckCircle2, Clock, Flame } from 'lucide-react';
 
@@ -18,6 +19,7 @@ function RecipesContent() {
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [maxTime, setMaxTime] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [previewRecipe, setPreviewRecipe] = useState(null);
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -276,7 +278,12 @@ function RecipesContent() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {recipes.map((recipe, idx) => (
-            <RecipeCard key={recipe._id} recipe={recipe} index={idx} />
+            <RecipeCard
+              key={recipe._id}
+              recipe={recipe}
+              index={idx}
+              onQuickPreview={setPreviewRecipe}
+            />
           ))}
         </div>
       )}
@@ -315,6 +322,13 @@ function RecipesContent() {
           </button>
         </div>
       )}
+
+      {/* Recipe Quick Preview Modal */}
+      <RecipeQuickModal
+        recipe={previewRecipe}
+        isOpen={Boolean(previewRecipe)}
+        onClose={() => setPreviewRecipe(null)}
+      />
     </div>
   );
 }
