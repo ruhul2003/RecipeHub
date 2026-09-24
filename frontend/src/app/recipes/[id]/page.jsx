@@ -20,6 +20,7 @@ import {
   ArrowLeft,
   Share2,
   Utensils,
+  Star,
 } from 'lucide-react';
 
 export default function RecipeDetailsPage() {
@@ -34,6 +35,25 @@ export default function RecipeDetailsPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [ratingsCount, setRatingsCount] = useState(0);
+  const [userRating, setUserRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const fetchReviews = async () => {
+    try {
+      const res = await API.get(`/reviews/recipe/${id}`);
+      if (res.data.success) {
+        setReviews(res.data.reviews || []);
+        setAverageRating(res.data.averageRating || 0);
+        setRatingsCount(res.data.count || 0);
+      }
+    } catch (err) {
+      console.error('Fetch reviews error:', err);
+    }
+  };
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -44,6 +64,8 @@ export default function RecipeDetailsPage() {
           const fetchedRecipe = res.data.recipe;
           setRecipe(fetchedRecipe);
           setLikesCount(fetchedRecipe.likesCount || 0);
+          setAverageRating(fetchedRecipe.averageRating || 0);
+          setRatingsCount(fetchedRecipe.ratingsCount || 0);
 
           if (user) {
             setHasLiked(fetchedRecipe.likedBy?.includes(user.email));
@@ -65,8 +87,38 @@ export default function RecipeDetailsPage() {
       }
     };
 
-    if (id) fetchDetails();
+    if (id) {
+      fetchDetails();
+      fetchReviews();
+    }
   }, [id, user]);
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      toast.error('Please login to leave a review.');
+      return router.push('/login');
+    }
+    if (!reviewComment.trim()) {
+      return toast.error('Please write a review comment.');
+    }
+    try {
+      setSubmittingReview(true);
+      const res = await API.post(`/reviews/recipe/${id}`, {
+        rating: userRating,
+        comment: reviewComment,
+      });
+      if (res.data.success) {
+        toast.success(res.data.message || 'Review submitted!');
+        setReviewComment('');
+        fetchReviews();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit review');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   const handleLike = async () => {
     if (!user) {
@@ -164,12 +216,20 @@ export default function RecipeDetailsPage() {
         {/* Recipe Overview Info */}
         <div className="space-y-6">
           <div className="space-y-2">
-            <div className="flex items-center space-x-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-              <Clock className="w-4 h-4 text-amber-500" />
-              <span>{recipe.preparationTime} Minutes Preparation</span>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <span className="flex items-center space-x-1">
+                <Clock className="w-4 h-4 text-amber-500" />
+                <span>{recipe.preparationTime} Mins</span>
+              </span>
               <span>•</span>
               <span className="text-amber-600 dark:text-amber-400 font-extrabold">
                 {recipe.difficultyLevel} Level
+              </span>
+              <span>•</span>
+              <span className="flex items-center space-x-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-2.5 py-0.5 rounded-full font-bold">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <span>{averageRating > 0 ? averageRating.toFixed(1) : 'New'}</span>
+                {ratingsCount > 0 && <span className="text-slate-400 text-[10px]">({ratingsCount})</span>}
               </span>
             </div>
 
@@ -291,6 +351,91 @@ export default function RecipeDetailsPage() {
           <div className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-line font-medium bg-slate-50 dark:bg-slate-800/40 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
             {recipe.instructions}
           </div>
+        </div>
+      </div>
+
+      {/* Reviews & Ratings Section */}
+      <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
+              <span>Community Reviews & Ratings</span>
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {ratingsCount > 0
+                ? `${ratingsCount} food lovers rated this dish (Average: ${averageRating.toFixed(1)} / 5.0)`
+                : 'Be the first foodie to review and rate this delicious recipe!'}
+            </p>
+          </div>
+        </div>
+
+        {/* Write a Review Form */}
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+          <h4 className="text-base font-bold text-slate-900 dark:text-white mb-3">Leave Your Review</h4>
+          {user ? (
+            <form onSubmit={handleReviewSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                  Your Rating
+                </label>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      type="button"
+                      key={star}
+                      onClick={() => setUserRating(star)}
+                      className="p-1 hover:scale-110 transition-transform focus:outline-none"
+                    >
+                      <Star
+                        className={`w-7 h-7 ${
+                          star <= userRating
+                            ? 'text-amber-400 fill-amber-400'
+                            : 'text-slate-300 dark:text-slate-600'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                  <span className="ml-2 text-sm font-bold text-amber-600 dark:text-amber-400">
+                    {userRating} / 5 Stars
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                  Share Your Experience or Cooking Tips
+                </label>
+                <textarea
+                  rows="3"
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="How did your recipe turn out? Any seasoning tweaks or tips?"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submittingReview}
+                className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-amber-500/20"
+              >
+                {submittingReview ? 'Submitting...' : 'Post Review'}
+              </button>
+            </form>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-2">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Sign in to rate this dish and share your cooking experience with fellow chefs!
+              </p>
+              <button
+                onClick={() => router.push('/login')}
+                className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-2 rounded-xl text-sm transition-colors"
+              >
+                Log In to Review
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
