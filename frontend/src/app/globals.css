@@ -26,3 +26,27 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-slate-300 dark:bg-slate-700 rounded-full hover:bg-amber-500;
 }
+
+/* Print styles for Kitchen Recipe Sheets */
+@media print {
+  nav,
+  footer,
+  .print-hide,
+  button:not(.print-keep) {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-size: 12pt;
+  }
+
+  .shadow-2xl, .shadow-xl, .shadow-lg, .shadow-md, .shadow-sm {
+    box-shadow: none !important;
+  }
+
+  .border {
+    border-color: #e5e7eb !important;
+  }
+}

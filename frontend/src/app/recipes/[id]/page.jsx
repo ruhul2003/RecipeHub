@@ -28,6 +28,7 @@ import {
   Plus,
   Timer,
   ShoppingBag,
+  Printer,
 } from 'lucide-react';
 import CookingTimer from '@/components/CookingTimer';
 import ShoppingListDrawer from '@/components/ShoppingListDrawer';
@@ -273,7 +274,7 @@ export default function RecipeDetailsPage() {
       {/* Navigation Back */}
       <button
         onClick={() => router.back()}
-        className="inline-flex items-center space-x-2 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-amber-500 transition-colors"
+        className="inline-flex items-center space-x-2 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-amber-500 transition-colors print-hide"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back to Recipes</span>
@@ -335,7 +336,7 @@ export default function RecipeDetailsPage() {
           </div>
 
           {/* Action Control Buttons Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2 print-hide">
             {/* Like Button */}
             <button
               onClick={handleLike}
@@ -388,10 +389,20 @@ export default function RecipeDetailsPage() {
               <Share2 className="w-5 h-5" />
               <span>Share</span>
             </button>
+
+            {/* Print Button */}
+            <button
+              onClick={() => window.print()}
+              className="p-3.5 rounded-2xl font-bold text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 flex flex-col items-center justify-center space-y-1 transition-colors"
+              title="Print Recipe Sheet"
+            >
+              <Printer className="w-5 h-5" />
+              <span>Print</span>
+            </button>
           </div>
 
           {/* Stripe Purchase Button */}
-          <div className="pt-4">
+          <div className="pt-4 print-hide">
             <button
               onClick={handleStripePurchase}
               disabled={purchasing}
