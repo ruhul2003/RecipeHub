@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import API from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
-import { PlusCircle, Image as ImageIcon, Utensils, Clock, Tag, Award, AlertTriangle, Crown, CheckCircle } from 'lucide-react';
+import { PlusCircle, Image as ImageIcon, Utensils, Clock, Tag, Award, AlertTriangle, Crown, CheckCircle, Users, Flame } from 'lucide-react';
 
 const CATEGORIES = ['Italian', 'Asian', 'Breakfast', 'Bakery', 'Dessert', 'Mexican', 'American', 'Thai', 'Seafood'];
 const CUISINES = ['Italian', 'French', 'Japanese', 'Chinese', 'Mexican', 'Indian', 'American', 'Thai', 'Mediterranean'];
+const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'Gluten-Free', 'High-Protein', 'Keto', 'Dairy-Free', 'Low-Carb'];
 
 export default function AddRecipePage() {
   const router = useRouter();
@@ -20,11 +21,20 @@ export default function AddRecipePage() {
   const [cuisineType, setCuisineType] = useState('Italian');
   const [difficultyLevel, setDifficultyLevel] = useState('Medium');
   const [preparationTime, setPreparationTime] = useState('');
+  const [servings, setServings] = useState(4);
+  const [calories, setCalories] = useState('');
+  const [dietaryTags, setDietaryTags] = useState([]);
   const [ingredients, setIngredients] = useState('');
   const [instructions, setInstructions] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
+
+  const toggleDietaryTag = (tag) => {
+    setDietaryTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
 
   // Pre-check recipe count for non-premium user
   useEffect(() => {
@@ -62,6 +72,9 @@ export default function AddRecipePage() {
         preparationTime,
         ingredients,
         instructions,
+        dietaryTags,
+        servings: Number(servings) || 4,
+        calories: calories ? Number(calories) : 0,
       });
 
       if (res.data.success) {
@@ -226,6 +239,69 @@ export default function AddRecipePage() {
               <option value="Medium">Medium</option>
               <option value="Hard">Hard</option>
             </select>
+          </div>
+
+          {/* Servings */}
+          <div>
+            <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">
+              Default Servings
+            </label>
+            <div className="relative">
+              <Users className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
+              <input
+                type="number"
+                min="1"
+                placeholder="4"
+                value={servings}
+                onChange={(e) => setServings(e.target.value)}
+                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 text-sm font-medium transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Calories (Optional) */}
+          <div>
+            <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">
+              Estimated Calories (kcal)
+            </label>
+            <div className="relative">
+              <Flame className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
+              <input
+                type="number"
+                min="0"
+                placeholder="e.g. 450"
+                value={calories}
+                onChange={(e) => setCalories(e.target.value)}
+                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 text-sm font-medium transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Dietary Tags Multi-Select */}
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">
+              Dietary & Health Badges (Optional)
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {DIETARY_OPTIONS.map((tag) => {
+                const isSelected = dietaryTags.includes(tag);
+                return (
+                  <button
+                    type="button"
+                    key={tag}
+                    onClick={() => toggleDietaryTag(tag)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all ${
+                      isSelected
+                        ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {isSelected && <CheckCircle className="w-3.5 h-3.5" />}
+                    <span>{tag}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Ingredients (One per line) */}
