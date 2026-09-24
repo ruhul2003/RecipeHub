@@ -6,6 +6,7 @@ import API from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import ReportModal from '@/components/ReportModal';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import RecipeCard from '@/components/RecipeCard';
 import toast from 'react-hot-toast';
 import {
   Heart,
@@ -89,6 +90,7 @@ export default function RecipeDetailsPage() {
   const [isTimerOpen, setIsTimerOpen] = useState(false);
   const [isShoppingListOpen, setIsShoppingListOpen] = useState(false);
   const [servingsMultiplier, setServingsMultiplier] = useState(1);
+  const [relatedRecipes, setRelatedRecipes] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
   const [ratingsCount, setRatingsCount] = useState(0);
@@ -164,6 +166,17 @@ export default function RecipeDetailsPage() {
     if (id) {
       fetchDetails();
       fetchReviews();
+      const fetchRelated = async () => {
+        try {
+          const res = await API.get(`/recipes/${id}/related`);
+          if (res.data.success) {
+            setRelatedRecipes(res.data.recipes || []);
+          }
+        } catch (err) {
+          console.error('Fetch related recipes error:', err);
+        }
+      };
+      fetchRelated();
     }
   }, [id, user]);
 
@@ -659,6 +672,34 @@ export default function RecipeDetailsPage() {
           )}
         </div>
       </div>
+
+      {/* Related Recipes Recommendations */}
+      {relatedRecipes.length > 0 && (
+        <div className="space-y-6 pt-4 print-hide">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">
+                Discover More Flavors
+              </span>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+                You May Also Enjoy
+              </h3>
+            </div>
+            <button
+              onClick={() => router.push('/recipes')}
+              className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline"
+            >
+              Browse All Dishes &rarr;
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {relatedRecipes.map((relRecipe, idx) => (
+              <RecipeCard key={relRecipe._id} recipe={relRecipe} index={idx} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Cooking Timer Modal */}
       <CookingTimer
