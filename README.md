@@ -1,6 +1,6 @@
 # RecipeHub — Full-Stack Recipe Sharing & Culinary Platform
 
-RecipeHub is a full-stack recipe sharing platform built with Next.js (App Router), React, Tailwind CSS, Framer Motion, MongoDB, Express, and the Stripe Checkout API.
+RecipeHub is a full-stack recipe sharing platform built with Next.js (App Router), React, Tailwind CSS, Framer Motion, MongoDB, Express, and Stripe Checkout API.
 
 ---
 
