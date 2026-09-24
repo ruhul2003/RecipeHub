@@ -23,7 +23,51 @@ import {
   Star,
   Trash2,
   MessageSquare,
+  Users,
+  Minus,
+  Plus,
 } from 'lucide-react';
+
+function formatScaledNumber(num) {
+  if (Math.abs(num - Math.round(num)) < 0.05) {
+    return Math.round(num).toString();
+  }
+  const fractions = [
+    { val: 0.25, str: '1/4' },
+    { val: 0.33, str: '1/3' },
+    { val: 0.5, str: '1/2' },
+    { val: 0.66, str: '2/3' },
+    { val: 0.75, str: '3/4' },
+  ];
+  const whole = Math.floor(num);
+  const remainder = num - whole;
+  const match = fractions.find((f) => Math.abs(f.val - remainder) < 0.08);
+  if (match) {
+    return whole > 0 ? `${whole} ${match.str}` : match.str;
+  }
+  return num.toFixed(1).replace(/\.0$/, '');
+}
+
+function scaleIngredient(text, multiplier) {
+  if (!text || multiplier === 1) return text;
+  return text.replace(
+    /^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)/,
+    (match) => {
+      let val = 0;
+      if (match.includes(' ')) {
+        const parts = match.split(' ');
+        const [num, den] = parts[1].split('/').map(Number);
+        val = Number(parts[0]) + num / den;
+      } else if (match.includes('/')) {
+        const [num, den] = match.split('/').map(Number);
+        val = num / den;
+      } else {
+        val = parseFloat(match);
+      }
+      return formatScaledNumber(val * multiplier);
+    }
+  );
+}
 
 export default function RecipeDetailsPage() {
   const { id } = useParams();
@@ -37,6 +81,7 @@ export default function RecipeDetailsPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
+  const [servingsMultiplier, setServingsMultiplier] = useState(1);
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
   const [ratingsCount, setRatingsCount] = useState(0);
@@ -337,9 +382,45 @@ export default function RecipeDetailsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8">
         {/* Ingredients Column */}
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
-          <div className="flex items-center space-x-3 text-amber-500 font-extrabold text-xl">
-            <Utensils className="w-6 h-6" />
-            <h3>Fresh Ingredients</h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3 text-amber-500 font-extrabold text-xl">
+              <Utensils className="w-6 h-6" />
+              <h3>Fresh Ingredients</h3>
+            </div>
+            {servingsMultiplier !== 1 && (
+              <button
+                onClick={() => setServingsMultiplier(1)}
+                className="text-xs font-bold text-amber-500 hover:underline"
+              >
+                Reset (1x)
+              </button>
+            )}
+          </div>
+
+          {/* Interactive Servings Scaler */}
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+              <Users className="w-4 h-4 text-amber-500" />
+              <span>
+                Servings: {Math.max(1, Math.round((recipe.servings || 4) * servingsMultiplier))}
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-1.5">
+              {[0.5, 1, 2, 3].map((mult) => (
+                <button
+                  key={mult}
+                  onClick={() => setServingsMultiplier(mult)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                    servingsMultiplier === mult
+                      ? 'bg-amber-500 text-white shadow-sm'
+                      : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                  }`}
+                >
+                  {mult}x
+                </button>
+              ))}
+            </div>
           </div>
 
           <ul className="space-y-3">
@@ -349,7 +430,7 @@ export default function RecipeDetailsPage() {
                 className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 <CheckCircle className="w-4 h-4 text-amber-500 shrink-0" />
-                <span>{ingredient}</span>
+                <span>{scaleIngredient(ingredient, servingsMultiplier)}</span>
               </li>
             ))}
           </ul>
