@@ -2,15 +2,17 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Clock, Heart, ChefHat, Tag, ArrowRight, Sparkles } from 'lucide-react';
+import { Clock, Heart, ChefHat, Tag, ArrowRight, Sparkles, Star, Users, Flame } from 'lucide-react';
 
-export default function RecipeCard({ recipe, index = 0 }) {
+export default function RecipeCard({ recipe, index = 0, onQuickPreview }) {
+  const rating = recipe.averageRating ? Number(recipe.averageRating).toFixed(1) : null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.05 }}
-      className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col group"
+      className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col group relative"
     >
       {/* Image Container */}
       <div className="relative h-56 overflow-hidden">
@@ -22,7 +24,7 @@ export default function RecipeCard({ recipe, index = 0 }) {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
 
         {/* Badges */}
-        <div className="absolute top-4 left-4 flex items-center space-x-2">
+        <div className="absolute top-4 left-4 flex flex-wrap gap-2 items-center">
           <span className="bg-amber-500/90 backdrop-blur-md text-white text-xs font-black px-3 py-1 rounded-full shadow-md">
             {recipe.category}
           </span>
@@ -34,10 +36,27 @@ export default function RecipeCard({ recipe, index = 0 }) {
           )}
         </div>
 
-        {/* Prep Time Badge */}
-        <div className="absolute bottom-3 right-3 bg-slate-900/80 backdrop-blur-md text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center space-x-1">
-          <Clock className="w-3.5 h-3.5 text-amber-400" />
-          <span>{recipe.preparationTime} mins</span>
+        {/* Rating Badge */}
+        <div className="absolute top-4 right-4 bg-slate-900/85 backdrop-blur-md text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center space-x-1 shadow-md">
+          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+          <span>{rating ? rating : 'New'}</span>
+          {recipe.ratingsCount > 0 && (
+            <span className="text-slate-400 text-[10px]">({recipe.ratingsCount})</span>
+          )}
+        </div>
+
+        {/* Prep Time & Servings Badge */}
+        <div className="absolute bottom-3 right-3 flex items-center space-x-2">
+          {recipe.servings && (
+            <span className="bg-slate-900/80 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center space-x-1">
+              <Users className="w-3 h-3 text-cyan-400" />
+              <span>{recipe.servings} Servings</span>
+            </span>
+          )}
+          <span className="bg-slate-900/80 backdrop-blur-md text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center space-x-1">
+            <Clock className="w-3.5 h-3.5 text-amber-400" />
+            <span>{recipe.preparationTime} mins</span>
+          </span>
         </div>
       </div>
 
@@ -48,12 +67,26 @@ export default function RecipeCard({ recipe, index = 0 }) {
             <Tag className="w-3.5 h-3.5 text-amber-500" />
             <span>{recipe.cuisineType} Cuisine</span>
             <span>•</span>
-            <span className="text-amber-600 dark:text-amber-400">{recipe.difficultyLevel || 'Medium'}</span>
+            <span className="text-amber-600 dark:text-amber-400 font-extrabold">{recipe.difficultyLevel || 'Medium'}</span>
           </div>
 
           <h3 className="text-xl font-extrabold text-slate-900 dark:text-white line-clamp-1 group-hover:text-amber-500 transition-colors">
             {recipe.recipeName}
           </h3>
+
+          {/* Dietary Tags (if any) */}
+          {recipe.dietaryTags && recipe.dietaryTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {recipe.dietaryTags.slice(0, 3).map((tag, i) => (
+                <span
+                  key={i}
+                  className="text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Card Footer Info */}
@@ -70,13 +103,24 @@ export default function RecipeCard({ recipe, index = 0 }) {
         </div>
 
         {/* Action Button */}
-        <Link
-          href={`/recipes/${recipe._id}`}
-          className="w-full mt-2 bg-slate-100 hover:bg-gradient-to-r hover:from-amber-500 hover:to-orange-500 text-slate-800 hover:text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:text-white font-bold py-3 rounded-2xl flex items-center justify-center space-x-2 transition-all shadow-sm group-hover:shadow-amber-500/20"
-        >
-          <span>View Details</span>
-          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-        </Link>
+        <div className="flex items-center gap-2 pt-1">
+          <Link
+            href={`/recipes/${recipe._id}`}
+            className="flex-1 bg-slate-100 hover:bg-gradient-to-r hover:from-amber-500 hover:to-orange-500 text-slate-800 hover:text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:text-white font-bold py-3 rounded-2xl flex items-center justify-center space-x-2 transition-all shadow-sm group-hover:shadow-amber-500/20 text-sm"
+          >
+            <span>View Details</span>
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+          {onQuickPreview && (
+            <button
+              onClick={() => onQuickPreview(recipe)}
+              title="Quick Preview"
+              className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors"
+            >
+              <Sparkles className="w-4 h-4 text-amber-500" />
+            </button>
+          )}
+        </div>
       </div>
     </motion.div>
   );
