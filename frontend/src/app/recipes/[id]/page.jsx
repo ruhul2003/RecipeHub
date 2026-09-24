@@ -27,8 +27,10 @@ import {
   Minus,
   Plus,
   Timer,
+  ShoppingBag,
 } from 'lucide-react';
 import CookingTimer from '@/components/CookingTimer';
+import ShoppingListDrawer from '@/components/ShoppingListDrawer';
 
 function formatScaledNumber(num) {
   if (Math.abs(num - Math.round(num)) < 0.05) {
@@ -84,6 +86,7 @@ export default function RecipeDetailsPage() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [isTimerOpen, setIsTimerOpen] = useState(false);
+  const [isShoppingListOpen, setIsShoppingListOpen] = useState(false);
   const [servingsMultiplier, setServingsMultiplier] = useState(1);
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
@@ -91,6 +94,26 @@ export default function RecipeDetailsPage() {
   const [userRating, setUserRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  const handleAddAllToShoppingList = () => {
+    if (!recipe?.ingredients?.length) return;
+    try {
+      const saved = localStorage.getItem('recipehub_shopping_list');
+      const existing = saved ? JSON.parse(saved) : [];
+      const newItems = recipe.ingredients.map((ing, idx) => ({
+        id: `${recipe._id}-${idx}-${Date.now()}`,
+        name: scaleIngredient(ing, servingsMultiplier),
+        checked: false,
+        addedAt: new Date().toISOString(),
+      }));
+      const merged = [...newItems, ...existing];
+      localStorage.setItem('recipehub_shopping_list', JSON.stringify(merged));
+      toast.success(`Added ${recipe.ingredients.length} items to shopping list!`);
+      setIsShoppingListOpen(true);
+    } catch (e) {
+      toast.error('Failed to update shopping list.');
+    }
+  };
 
   const fetchReviews = async () => {
     try {
@@ -437,6 +460,14 @@ export default function RecipeDetailsPage() {
               </li>
             ))}
           </ul>
+
+          <button
+            onClick={handleAddAllToShoppingList}
+            className="w-full mt-4 bg-amber-500/10 hover:bg-amber-500 text-amber-600 hover:text-white dark:text-amber-400 dark:hover:text-white font-bold py-3 px-4 rounded-2xl text-xs flex items-center justify-center space-x-2 transition-all border border-amber-500/20"
+          >
+            <ShoppingBag className="w-4 h-4" />
+            <span>Add All to Shopping Checklist</span>
+          </button>
         </div>
 
         {/* Cooking Instructions Column */}
@@ -623,6 +654,12 @@ export default function RecipeDetailsPage() {
         isOpen={isTimerOpen}
         onClose={() => setIsTimerOpen(false)}
         initialMinutes={recipe.preparationTime || 15}
+      />
+
+      {/* Shopping List Drawer */}
+      <ShoppingListDrawer
+        isOpen={isShoppingListOpen}
+        onClose={() => setIsShoppingListOpen(false)}
       />
 
       {/* Report Modal Component */}

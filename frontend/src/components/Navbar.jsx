@@ -5,13 +5,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from './ThemeToggle';
-import { Utensils, Menu, X, Crown, User, LogOut, LayoutDashboard, Heart, Bookmark, PlusCircle } from 'lucide-react';
+import ShoppingListDrawer from './ShoppingListDrawer';
+import { Utensils, Menu, X, Crown, User, LogOut, LayoutDashboard, Heart, Bookmark, PlusCircle, ShoppingBag } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userDropdown, setUserDropdown] = useState(false);
+  const [shoppingListOpen, setShoppingListOpen] = useState(false);
 
   const isActive = (path) => pathname === path;
 
@@ -54,6 +56,14 @@ export default function Navbar() {
             </Link>
 
             <ThemeToggle />
+
+            <button
+              onClick={() => setShoppingListOpen(true)}
+              title="Shopping Checklist"
+              className="p-2 text-slate-600 hover:text-amber-500 dark:text-slate-300 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors relative"
+            >
+              <ShoppingBag className="w-5 h-5" />
+            </button>
 
             {user ? (
               <div className="relative">
@@ -206,6 +216,17 @@ export default function Navbar() {
             Browse Recipes
           </Link>
 
+          <button
+            onClick={() => {
+              setMobileOpen(false);
+              setShoppingListOpen(true);
+            }}
+            className="flex items-center space-x-2 py-2 text-base font-semibold text-slate-700 dark:text-slate-200"
+          >
+            <ShoppingBag className="w-5 h-5 text-amber-500" />
+            <span>Shopping Checklist</span>
+          </button>
+
           {user ? (
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
               <Link
@@ -254,6 +275,12 @@ export default function Navbar() {
           )}
         </div>
       )}
+
+      {/* Shopping List Drawer */}
+      <ShoppingListDrawer
+        isOpen={shoppingListOpen}
+        onClose={() => setShoppingListOpen(false)}
+      />
     </nav>
   );
 }
