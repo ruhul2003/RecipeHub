@@ -17,6 +17,7 @@ function RecipesContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [maxTime, setMaxTime] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -56,6 +57,10 @@ function RecipesContent() {
           params.append('maxTime', maxTime);
         }
 
+        if (sortBy) {
+          params.append('sortBy', sortBy);
+        }
+
         const res = await API.get(`/recipes?${params.toString()}`);
         if (res.data.success) {
           setRecipes(res.data.recipes);
@@ -70,7 +75,7 @@ function RecipesContent() {
     };
 
     fetchRecipes();
-  }, [page, selectedCategories, searchTerm, selectedDifficulty, maxTime]);
+  }, [page, selectedCategories, searchTerm, selectedDifficulty, maxTime, sortBy]);
 
   const toggleCategory = (category) => {
     setPage(1);
@@ -84,6 +89,7 @@ function RecipesContent() {
     setSearchTerm('');
     setSelectedDifficulty('all');
     setMaxTime('');
+    setSortBy('newest');
     setPage(1);
   };
 
@@ -222,12 +228,32 @@ function RecipesContent() {
       </div>
 
       {/* Results Header */}
-      <div className="flex items-center justify-between text-sm text-slate-500">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-sm text-slate-500">
         <p className="font-semibold">
           Showing <span className="text-slate-900 dark:text-white font-bold">{recipes.length}</span> of{' '}
           <span className="text-slate-900 dark:text-white font-bold">{totalCount}</span> recipes
         </p>
-        <p className="text-xs">Page {page} of {totalPages}</p>
+
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-bold text-slate-400 uppercase">Sort By:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setPage(1);
+              }}
+              className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-sm"
+            >
+              <option value="newest">Newest First</option>
+              <option value="popular">Most Popular</option>
+              <option value="rating">Highest Rated</option>
+              <option value="prepTimeAsc">Quickest to Cook</option>
+            </select>
+          </div>
+
+          <p className="text-xs hidden sm:block">Page {page} of {totalPages}</p>
+        </div>
       </div>
 
       {/* Recipes Cards Grid */}
