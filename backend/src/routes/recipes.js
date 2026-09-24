@@ -188,7 +188,19 @@ router.get('/:id', async (req, res) => {
 // @route POST /api/recipes (Enforces 2 recipes limit for normal users)
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { recipeName, recipeImage, category, cuisineType, difficultyLevel, preparationTime, ingredients, instructions } = req.body;
+    const {
+      recipeName,
+      recipeImage,
+      category,
+      cuisineType,
+      difficultyLevel,
+      preparationTime,
+      ingredients,
+      instructions,
+      dietaryTags,
+      servings,
+      calories,
+    } = req.body;
 
     if (!recipeName || !recipeImage || !category || !cuisineType || !preparationTime || !ingredients || !instructions) {
       return res.status(400).json({ success: false, message: 'All required fields must be provided.' });
@@ -210,6 +222,12 @@ router.post('/', verifyToken, async (req, res) => {
       ? ingredients
       : ingredients.split('\n').map((i) => i.trim()).filter(Boolean);
 
+    const formattedTags = Array.isArray(dietaryTags)
+      ? dietaryTags
+      : typeof dietaryTags === 'string'
+      ? dietaryTags.split(',').map((t) => t.trim()).filter(Boolean)
+      : [];
+
     const recipe = await Recipe.create({
       recipeName,
       recipeImage,
@@ -219,6 +237,9 @@ router.post('/', verifyToken, async (req, res) => {
       preparationTime: Number(preparationTime),
       ingredients: formattedIngredients,
       instructions,
+      dietaryTags: formattedTags,
+      servings: servings ? Number(servings) : 4,
+      calories: calories ? Number(calories) : 0,
       authorId: req.user._id,
       authorName: req.user.name,
       authorEmail: req.user.email,
@@ -243,7 +264,19 @@ router.put('/:id', verifyToken, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized to update this recipe.' });
     }
 
-    const { recipeName, recipeImage, category, cuisineType, difficultyLevel, preparationTime, ingredients, instructions } = req.body;
+    const {
+      recipeName,
+      recipeImage,
+      category,
+      cuisineType,
+      difficultyLevel,
+      preparationTime,
+      ingredients,
+      instructions,
+      dietaryTags,
+      servings,
+      calories,
+    } = req.body;
 
     if (recipeName) recipe.recipeName = recipeName;
     if (recipeImage) recipe.recipeImage = recipeImage;
@@ -257,6 +290,15 @@ router.put('/:id', verifyToken, async (req, res) => {
         : ingredients.split('\n').map((i) => i.trim()).filter(Boolean);
     }
     if (instructions) recipe.instructions = instructions;
+    if (dietaryTags !== undefined) {
+      recipe.dietaryTags = Array.isArray(dietaryTags)
+        ? dietaryTags
+        : typeof dietaryTags === 'string'
+        ? dietaryTags.split(',').map((t) => t.trim()).filter(Boolean)
+        : [];
+    }
+    if (servings !== undefined) recipe.servings = Number(servings) || 4;
+    if (calories !== undefined) recipe.calories = Number(calories) || 0;
 
     await recipe.save();
     res.json({ success: true, message: 'Recipe updated successfully!', recipe });
